@@ -1,0 +1,16 @@
+-- Drop in reverse dependency order
+DROP TABLE IF EXISTS social_connection CASCADE;
+DROP TABLE IF EXISTS login_log CASCADE;
+DROP TABLE IF EXISTS player_subscription CASCADE;
+DROP TABLE IF EXISTS club_membership CASCADE;
+DROP TABLE IF EXISTS subscription_tier CASCADE;
+DROP TABLE IF EXISTS club CASCADE;
+DROP TABLE IF EXISTS player CASCADE;
+DROP TABLE IF EXISTS social_connection_status CASCADE;
+DROP TABLE IF EXISTS social_connection_type CASCADE;
+DROP TABLE IF EXISTS login_status CASCADE;
+DROP TABLE IF EXISTS billing_cycle CASCADE;
+DROP TABLE IF EXISTS subscription_status CASCADE;
+DROP TABLE IF EXISTS membership_status CASCADE;
+DROP TABLE IF EXISTS membership_role CASCADE;
+DROP TABLE IF EXISTS player_status CASCADE;
