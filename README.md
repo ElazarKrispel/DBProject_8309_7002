@@ -5,7 +5,7 @@ Course 150225 | Jerusalem College of Technology – Machon Lev | 2026
 
 | | |
 |---|---|
-| **Students** | Alon Greenstein (ID: 8309) · Elazar Krispel (ID: 7002) |
+| **Students** | Elazar Krispel (ID: 8309) · Alon Greenstein (ID: 7002) |
 | **System** | Chess Tournament Management System |
 | **Selected Unit** | Class 1 – Users and Clubs |
 
