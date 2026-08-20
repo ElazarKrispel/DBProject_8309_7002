@@ -1,120 +1,121 @@
-# Chess Platform – Users and Clubs
+# פלטפורמת שחמט – משתמשים ומועדונים
 
-**Database Design Project – Phase A**
-Course 150225 | Jerusalem College of Technology – Machon Lev | 2026
+**פרויקט עיצוב בסיס נתונים – שלב א**
+
+קורס 150225 | המכללה האקדמית להנדסה ירושלים – מכון לב | תשפ״ו
 
 | | |
 |---|---|
-| **Students** | Elazar Krispel (ID: 8309) · Alon Greenstein (ID: 7002) |
-| **System** | Chess Tournament Management System |
-| **Selected Unit** | Class 1 – Users and Clubs |
+| **מגישים** | אלעזר קריספל (ת״ז 8309) · אלון גרינשטיין (ת״ז 7002) |
+| **המערכת** | Chess Tournament Management System |
+| **היחידה שנבחרה** | Class 1 – Users and Clubs (משתמשים ומועדונים) |
 
 ---
 
-## Table of Contents
+## תוכן עניינים
 
-1. [Introduction](#introduction)
-2. [Application Screens (AI Studio)](#application-screens)
-3. [ERD Diagram](#erd-diagram)
-4. [DSD Diagram](#dsd-diagram)
-5. [Design Decisions](#design-decisions)
-6. [Data Insertion](#data-insertion)
-7. [Backup and Restore](#backup-and-restore)
-
----
-
-## Introduction
-
-### System Overview
-
-This database module manages the **user and club lifecycle** of an online chess platform. It covers everything from the moment a player registers through their day-to-day activity to their social interactions and club affiliations.
-
-The data stored in this unit includes:
-
-- **Players** – personal details, geographic information, three separate ELO ratings (Classical, Rapid, Blitz), account status, and registration timeline.
-- **Clubs** – chess clubs with country and city data, an official/unofficial flag, and founding date.
-- **Club Memberships** – which players belong to which clubs, in what role (Owner, Admin, Moderator, Member), who invited them, when they joined, and when (if ever) they left.
-- **Subscription Tiers** – the platform's subscription plans, including monthly/annual pricing and feature flags (analytics, puzzles, engine access).
-- **Player Subscriptions** – which subscription tier each player is on, billing cycle, auto-renewal status, and subscription date range.
-- **Login Logs** – a detailed audit trail of every login attempt: IP address, detected location, device type, operating system, browser, session duration, and a suspicious-activity flag.
-- **Social Connections** – follow/friend relationships between players, with connection type and status.
-
-### Main Functionality
-
-The core operations this unit supports are:
-
-1. **Player lifecycle management** – register new players, update status (active / suspended / banned), track activity over time.
-2. **Club management** – create and maintain clubs, manage membership with role-based access control.
-3. **Subscription and billing** – assign players to subscription tiers, track billing cycles and renewal dates.
-4. **Security and audit** – log every login attempt with device and geo-location data; flag suspicious activity for review.
-5. **Social graph** – record and query player-to-player connections (follows, friendships).
+1. [מבוא](#מבוא)
+2. [מסכי האפליקציה – AI Studio](#מסכי-האפליקציה--ai-studio)
+3. [תרשים ERD](#תרשים-erd)
+4. [תרשים DSD](#תרשים-dsd)
+5. [החלטות עיצוב](#החלטות-עיצוב)
+6. [אכלוס הנתונים](#אכלוס-הנתונים)
+7. [גיבוי ושחזור](#גיבוי-ושחזור)
 
 ---
 
-## Application Screens
+## מבוא
 
-The initial system screens were designed using **Google AI Studio**. The application prototype (not yet connected to the database) can be viewed here:
+### סקירת המערכת
 
-**[Open AI Studio Application](https://ai.studio/apps/4a0fe7d1-9180-4610-82de-3dff0eb943e8)**
+יחידה זו בבסיס הנתונים מנהלת את **מחזור החיים של המשתמשים והמועדונים** בפלטפורמת שחמט מקוונת. היא מכסה את התהליך מרגע רישום השחקן, דרך הפעילות היומיומית שלו ועד לקשרים החברתיים ולהשתייכות למועדונים.
 
-The prototype covers four main screens:
+הנתונים הנשמרים ביחידה כוללים:
 
-1. **Player Dashboard** – displays a player's profile, ratings across all three time controls, and recent activity.
-2. **Club Management** – browse and manage clubs, view member lists and roles.
-3. **Subscription Overview** – view active subscription tier, billing cycle, and renewal date.
-4. **Login Activity / Security Log** – audit trail of login attempts with device and location details.
+- **שחקנים** – פרטים אישיים, מידע גאוגרפי, שלושה דירוגי ELO נפרדים (Classical, Rapid, Blitz), סטטוס חשבון ותאריכי רישום ופעילות.
+- **מועדונים** – מועדוני שחמט עם נתוני מדינה ועיר, סימון רשמי/לא-רשמי ותאריך הקמה.
+- **חברויות במועדון** – אילו שחקנים משתייכים לכל מועדון, באיזה תפקיד (Owner / Admin / Moderator / Member), מי הזמין אותם, מתי הצטרפו ומתי עזבו, אם עזבו.
+- **תוכניות מנוי** – תוכניות המנוי של הפלטפורמה, כולל מחיר חודשי ושנתי ודגלי תכונות כמו אנליטיקה, חידות וגישה למנוע שחמט.
+- **מנויי שחקנים** – תוכנית המנוי של כל שחקן, מחזור החיוב, חידוש אוטומטי וטווח תאריכי המנוי.
+- **יומני התחברות** – מסלול ביקורת מפורט לכל ניסיון התחברות: כתובת IP, מיקום שזוהה, סוג מכשיר, מערכת הפעלה, דפדפן, משך הסשן וסימון פעילות חשודה.
+- **קשרים חברתיים** – יחסי מעקב וחברות בין שחקנים, עם סוג הקשר והסטטוס שלו.
 
----
+### הפונקציונליות המרכזית
 
-## ERD Diagram
+הפעולות המרכזיות שהיחידה תומכת בהן הן:
 
-The Entity-Relationship Diagram below shows all entities and their relationships before normalization into relational tables.
-
-![ERD Diagram](Diagrams/Users_and_clubs_ERD.png)
-
----
-
-## DSD Diagram
-
-The Database Schema Diagram (DSD) shows the final relational schema – tables, columns, data types, primary keys, foreign keys, and constraints.
-
-![DSD Diagram](Diagrams/Users_and_clubs_DSD.png)
+1. **ניהול מחזור חיי שחקן** – רישום שחקנים חדשים, עדכון סטטוס (active / suspended / banned) ומעקב אחר פעילות לאורך זמן.
+2. **ניהול מועדונים** – יצירה ותחזוקה של מועדונים וניהול חברויות באמצעות הרשאות לפי תפקיד.
+3. **מנויים וחיוב** – שיוך שחקנים לתוכניות מנוי ומעקב אחר מחזורי חיוב ותאריכי חידוש.
+4. **אבטחה וביקורת** – תיעוד כל ניסיון התחברות עם נתוני מכשיר ומיקום, וסימון פעילות חשודה לבדיקה.
+5. **גרף חברתי** – תיעוד ושליפה של קשרים בין שחקנים, כגון מעקב וחברות.
 
 ---
 
-## Design Decisions
+## מסכי האפליקציה – AI Studio
 
-### 1. Lookup / Enum Tables for All Status Fields
+מסכי המערכת הראשוניים עוצבו באמצעות **Google AI Studio**. אב-הטיפוס של האפליקציה, שעדיין אינו מחובר לבסיס הנתונים, זמין כאן:
 
-Every status or categorical field uses a dedicated lookup table (e.g. `player_status`, `membership_role`, `login_status`) rather than a plain `VARCHAR` or a PostgreSQL `ENUM` type.
+**[פתיחת האפליקציה ב-AI Studio](https://ai.studio/apps/4a0fe7d1-9180-4610-82de-3dff0eb943e8)**
 
-**Rationale:** Lookup tables enforce referential integrity via foreign key constraints, are easy to extend without schema migrations, and make it trivial to add human-readable labels or translations in the future.
+אב-הטיפוס כולל ארבעה מסכים מרכזיים:
 
-Tables created: `player_status`, `membership_role`, `membership_status`, `subscription_status`, `billing_cycle`, `login_status`, `social_connection_type`, `social_connection_status`.
+1. **לוח בקרה לשחקן (Player Dashboard)** – הצגת פרופיל השחקן, דירוגיו בשלושת פורמטי הזמן והפעילות האחרונה שלו.
+2. **ניהול מועדונים (Club Management)** – עיון במועדונים וניהולם, כולל רשימות חברים ותפקידים.
+3. **סקירת מנוי (Subscription Overview)** – הצגת תוכנית המנוי הפעילה, מחזור החיוב ותאריך החידוש.
+4. **פעילות התחברות ויומן אבטחה (Login Activity / Security Log)** – מסלול ביקורת של ניסיונות התחברות עם פרטי מכשיר ומיקום.
 
-### 2. Three Separate Rating Columns
+---
 
-The `player` table has three independent rating columns: `rating_classical`, `rating_rapid`, and `rating_blitz`, each `INTEGER` with `DEFAULT 1200` and `CHECK (>= 0)`.
+## תרשים ERD
 
-**Rationale:** The three time-control categories (Classical, Rapid, Blitz) are tracked separately on real chess platforms (e.g. Chess.com, Lichess). Storing them as a single "rating" field would lose important information. The default of 1200 is the standard provisional rating used across chess platforms.
+תרשים ה-Entity-Relationship מציג את כל הישויות והקשרים ביניהן לפני המרתם לטבלאות רלציוניות.
 
-### 3. Invitation Tracking with Self-Invitation Guard
+![תרשים ERD](Diagrams/Users_and_clubs_ERD.png)
 
-`club_membership.invited_by_player_id` is a self-referential FK back to `player`. A `CHECK` constraint ensures `invited_by_player_id != player_id` (a player cannot invite themselves).
+---
 
-**Rationale:** Tracking who invited whom enables viral-growth analytics, anti-spam measures, and the ability to revoke memberships that were obtained through policy violations. The self-invitation guard prevents a trivially invalid data state.
+## תרשים DSD
 
-### 4. Social Connection Uniqueness
+תרשים ה-Database Schema מציג את הסכמה הרלציונית הסופית – טבלאות, עמודות, טיפוסי נתונים, מפתחות ראשיים, מפתחות זרים ואילוצים.
 
-The `social_connection` table has a `UNIQUE (from_player_id, to_player_id, connection_type_code)` constraint and a `CHECK (from_player_id != to_player_id)` constraint.
+![תרשים DSD](Diagrams/Users_and_clubs_DSD.png)
 
-**Rationale:** This prevents duplicate connections of the same type and self-connections without requiring application-level enforcement. One player can simultaneously have a "follow" and a "friend" relationship with another (different `connection_type_code`), which the unique index handles correctly.
+---
 
-### 5. Meaningful DATE Fields
+## החלטות עיצוב
 
-Every main entity has at least two meaningful `DATE` fields:
+### 1. טבלאות lookup לכל שדות הסטטוס
 
-| Table | DATE Field 1 | DATE Field 2 |
+לכל שדה של סטטוס או קטגוריה הוגדרה טבלת lookup ייעודית, לדוגמה `player_status`,‏ `membership_role` ו-`login_status`, במקום מחרוזת `VARCHAR` רגילה או טיפוס `ENUM` של PostgreSQL.
+
+**נימוק:** טבלאות lookup אוכפות שלמות קשרים באמצעות מפתחות זרים, מאפשרות הרחבה ללא שינוי סכמת בסיס הנתונים ומקלות על הוספת תוויות קריאות או תרגומים בעתיד.
+
+הטבלאות שנוצרו: `player_status`,‏ `membership_role`,‏ `membership_status`,‏ `subscription_status`,‏ `billing_cycle`,‏ `login_status`,‏ `social_connection_type`,‏ `social_connection_status`.
+
+### 2. שלוש עמודות דירוג נפרדות
+
+בטבלה `player` קיימות שלוש עמודות דירוג עצמאיות: `rating_classical`,‏ `rating_rapid` ו-`rating_blitz`. כל אחת מהן היא מסוג `INTEGER`, עם `DEFAULT 1200` ואילוץ `CHECK (>= 0)`.
+
+**נימוק:** שלושת פורמטי הזמן – Classical, Rapid ו-Blitz – נמדדים בנפרד בפלטפורמות שחמט אמיתיות, כגון Chess.com ו-Lichess. שמירתם בשדה דירוג יחיד הייתה גורמת לאובדן מידע חשוב. ערך ברירת המחדל 1200 הוא דירוג התחלתי מקובל בפלטפורמות שחמט.
+
+### 3. מעקב אחר הזמנות ומניעת הזמנה עצמית
+
+השדה `club_membership.invited_by_player_id` הוא מפתח זר שמפנה בחזרה לטבלה `player`. אילוץ `CHECK` מבטיח ש-`invited_by_player_id != player_id`, כך ששחקן אינו יכול להזמין את עצמו.
+
+**נימוק:** תיעוד זהות המזמין מאפשר ניתוח צמיחה, טיפול בספאם וביטול חברויות שנוצרו תוך הפרת מדיניות. מניעת הזמנה עצמית חוסמת מצב נתונים שגוי באופן מובנה.
+
+### 4. ייחודיות של קשרים חברתיים
+
+בטבלה `social_connection` מוגדר אילוץ `UNIQUE (from_player_id, to_player_id, connection_type_code)` וכן אילוץ `CHECK (from_player_id != to_player_id)`.
+
+**נימוק:** האילוצים מונעים קשרים כפולים מאותו סוג וקשר של שחקן עם עצמו, ללא צורך באכיפה ברמת האפליקציה. שחקן יכול לקיים במקביל קשר מעקב וקשר חברות עם שחקן אחר, משום שלכל קשר ערך `connection_type_code` שונה.
+
+### 5. שדות DATE משמעותיים
+
+המערכת כוללת שדות `DATE` משמעותיים בטבלאות המרכזיות:
+
+| טבלה | שדה DATE ראשון | שדה DATE שני |
 |---|---|---|
 | `player` | `birth_date` | `registration_date` |
 | `club` | `founded_date` | – |
@@ -123,59 +124,60 @@ Every main entity has at least two meaningful `DATE` fields:
 | `login_log` | `login_date` | – |
 | `social_connection` | `created_date` | – |
 
-`left_date >= join_date` and subscription date ordering are enforced with `CHECK` constraints.
+הסדר הכרונולוגי של תאריכי החברות והמנוי נאכף באמצעות אילוצי `CHECK`, ובהם `left_date >= join_date`.
 
-### 6. Login Security Fields
+### 6. שדות אבטחה ביומן ההתחברות
 
-`login_log` stores `is_suspicious BOOLEAN` and a `CHECK` constraint that requires `failure_reason` to be `NULL` when `login_status_code = 'success'`. Session duration is stored in seconds (`session_duration_sec INTEGER DEFAULT 0, CHECK (>= 0)`).
+הטבלה `login_log` שומרת את השדה `is_suspicious BOOLEAN`. נוסף לכך, אילוץ `CHECK` דורש שהשדה `failure_reason` יהיה `NULL` כאשר `login_status_code = 'success'`. משך הסשן נשמר בשניות באמצעות `session_duration_sec INTEGER DEFAULT 0, CHECK (>= 0)`.
 
-**Rationale:** These fields enable security dashboards to surface anomalous login patterns without requiring a separate security table.
-
----
-
-## Data Insertion
-
-Data was inserted using **manual INSERT statements** written directly into `insertTables.sql`.
-
-The file contains INSERT statements for all 15 tables:
-- All 8 lookup/status tables are seeded with real, meaningful values (e.g. `'active'`, `'suspended'`, `'banned'` for player statuses).
-- The remaining 7 tables — the 6 core operational tables plus the `subscription_tier` reference table — are each populated with at least 500 records, and 4 of them (`club_membership`, `player_subscription`, `login_log`, `social_connection`) with 20,000 records each.
-
-The INSERT file runs inside a single `BEGIN` / `COMMIT` transaction to ensure atomicity — if any statement fails, the entire population is rolled back cleanly.
+**נימוק:** שדות אלה מאפשרים ללוחות בקרה בתחום האבטחה להציג דפוסי התחברות חריגים ללא צורך בטבלת אבטחה נפרדת.
 
 ---
 
-## Backup and Restore
+## אכלוס הנתונים
 
-Two separate backup methods were used.
+הנתונים הוכנו באמצעות סקריפט Python בשם `generate_seed_data.py`, שיצר פקודות `INSERT`. הפלט של הסקריפט נשמר בקובץ `insertTables.sql`, והוא שימש לאכלוס בסיס הנתונים. כלומר, הנתונים לא יובאו מקובצי CSV או מכלי חיצוני, אלא נוצרו בתכנות ונשמרו כפקודות SQL מפורשות.
 
-### Method 1 – Command-Line (`pg_dump`)
+הקובץ מכיל פקודות `INSERT` עבור כל 15 הטבלאות:
 
-A plain-SQL dump was created using the `pg_dump` utility from inside the Docker container:
+- כל 8 טבלאות ה-lookup/status אוכלסו בערכים בעלי משמעות, לדוגמה `'active'`,‏ `'suspended'` ו-`'banned'` עבור סטטוסי שחקנים.
+- 7 הטבלאות הנותרות – 6 הטבלאות התפעוליות המרכזיות וטבלת העזר `subscription_tier` – כוללות לפחות 500 רשומות כל אחת. ארבע מהן (`club_membership`,‏ `player_subscription`,‏ `login_log`,‏ `social_connection`) כוללות 20,000 רשומות כל אחת.
+
+קובץ ה-INSERT רץ בתוך טרנזקציית `BEGIN` / `COMMIT` אחת, כדי להבטיח אטומיות: אם פקודה כלשהי נכשלת, אכלוס הנתונים כולו מתבטל באופן מסודר.
+
+---
+
+## גיבוי ושחזור
+
+בוצע גיבוי בשתי שיטות נפרדות.
+
+### שיטה 1 – שורת הפקודה (`pg_dump`)
+
+גיבוי בפורמט SQL רגיל נוצר באמצעות `pg_dump` מתוך קונטיינר ה-Docker:
 
 ```bash
 pg_dump -U admin_chess chess_db > backup/backup_2026-04-28_cmd.sql
 ```
 
-Backup file: [`backup/backup_2026-04-28_cmd.sql`](backup/backup_2026-04-28_cmd.sql)
+קובץ הגיבוי: [`backup/backup_2026-04-28_cmd.sql`](backup/backup_2026-04-28_cmd.sql)
 
-To restore on another machine:
+לשחזור במחשב אחר:
 
 ```bash
 psql -U admin_chess -d chess_db -f backup/backup_2026-04-28_cmd.sql
 ```
 
-The restore was verified on a second computer by running `SELECT COUNT(*)` on each table and confirming the row counts matched the original database.
+השחזור אומת במחשב נוסף באמצעות הרצת `SELECT COUNT(*)` על כל טבלה והשוואת מספרי הרשומות לבסיס הנתונים המקורי.
 
 ---
 
-### Method 2 – pgAdmin UI
+### שיטה 2 – ממשק pgAdmin
 
-A second backup was created through the **pgAdmin 4** graphical interface:
+גיבוי נוסף נוצר באמצעות הממשק הגרפי של **pgAdmin 4**:
 
-1. Right-click the `chess_db` database → **Backup…**
-2. Set format to **Custom**, filename to `backup_2026-04-28_pgadmin.backup`, and click **Backup**.
+1. לחיצה ימנית על בסיס הנתונים `chess_db` ובחירה ב-**Backup…**.
+2. בחירת הפורמט **Custom**, הזנת שם הקובץ `backup_2026-04-28_pgadmin.backup` ולחיצה על **Backup**.
 
-Backup file: [`backup/backup_2026-04-28_pgadmin.backup`](backup/backup_2026-04-28_pgadmin.backup)
+קובץ הגיבוי: [`backup/backup_2026-04-28_pgadmin.backup`](backup/backup_2026-04-28_pgadmin.backup)
 
-To restore, the **Restore…** dialog was used in pgAdmin with the same custom-format file, selecting the target database and clicking **Restore**.
+לצורך שחזור נעשה שימוש בחלון **Restore…** של pgAdmin עם אותו קובץ בפורמט Custom, תוך בחירת בסיס הנתונים המיועד ולחיצה על **Restore**.

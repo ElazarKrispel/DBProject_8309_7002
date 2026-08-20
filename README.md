@@ -53,7 +53,7 @@ docker-compose.yml     ← סביבת PostgreSQL 18 + pgAdmin
 שלב ד/                 ← תכנות PL/pgSQL
 ```
 
-לכל שלב תיקייה עצמאית, ובתוכה קובץ `README.md` שהוא **דוח הפרויקט של אותו שלב**, לצד קבצי ה-SQL, התרשימים, צילומי המסך והגיבוי המעודכן של אותו שלב.
+לכל שלב תיקייה עצמאית, ובתוכה קובץ `README.md` שהוא **דוח הפרויקט של אותו שלב**, לצד התוצרים הנדרשים באותו שלב – קובצי SQL, תרשימים, צילומי מסך וגיבויים לפי הצורך.
 
 ---
 
@@ -71,7 +71,7 @@ docker-compose.yml     ← סביבת PostgreSQL 18 + pgAdmin
 
 | שלב | תוצרים |
 | --- | ------ |
-| **א** | 15 טבלאות (8 טבלאות עזר + 7 טבלאות ליבה), `createTables.sql`, `dropTables.sql`, `insertTables.sql`, `selectAll.sql`, שני גיבויים בשתי שיטות |
+| **א** | 15 טבלאות: 8 טבלאות lookup/status, טבלת `subscription_tier` אחת ו-6 טבלאות תפעוליות; `createTables.sql`, `dropTables.sql`, `insertTables.sql`, `selectAll.sql` ושני גיבויים בשתי שיטות |
 | **ב** | 8 שאילתות SELECT (4 מהן בשתי גרסאות), 3 UPDATE, 3 DELETE, 3 אילוצים חדשים, 3 אינדקסים עם מדידת זמנים, `backup2.sql` |
 | **ג** | בסיס משולב של 27 טבלאות, הגשר `login_log.client_id → uiclient.client_id`, 3 מבטים עם 2 שאילתות לכל מבט, `backup3.sql` |
 | **ד** | 2 פונקציות (אחת מחזירה `REF CURSOR`), 2 פרוצדורות, 2 טריגרים (אחד על `UPDATE`), 2 תוכניות ראשיות, `backup4.sql` |
