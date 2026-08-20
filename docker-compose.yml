@@ -21,7 +21,7 @@ services:
       # Phase C (27 tables, 3 views, the integration bridge) + Phase D
       # (2 functions, 2 procedures, 2 triggers).
       #
-      # The Phase A scripts in ./init-db are kept unchanged in the repository as
+      # The Phase A scripts in "./שלב א" are kept unchanged in the repository as
       # that phase's deliverable; they are simply no longer the bootstrap, since
       # their output is already contained in backup4.sql.
       - ./שלב ד/backup4.sql:/docker-entrypoint-initdb.d/01_restore_backup4.sql:ro
