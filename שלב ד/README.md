@@ -10,7 +10,7 @@
 
 1. [מבוא](#1-מבוא)
 2. [הרצת הסביבה](#2-הרצת-הסביבה)
-3. [שינויי סכמה – AlterTable.sql](#3-שינויי-סכמה--altertablesql)
+3. [שינויי סכמה](#3-שינויי-סכמה)
 4. [פונקציה 1 – fn_player_activity_score](#4-פונקציה-1--fn_player_activity_score)
 5. [פונקציה 2 – fn_club_report (REF CURSOR)](#5-פונקציה-2--fn_club_report-ref-cursor)
 6. [פרוצדורה 1 – sp_process_billing_cycle](#6-פרוצדורה-1--sp_process_billing_cycle)
@@ -37,7 +37,6 @@
 
 | קובץ | תוכן |
 |---|---|
-| `AlterTable.sql` | תיעוד ההחלטה שאין צורך בשינויי סכמה |
 | `Function1_PlayerActivityScore.sql` | פונקציה 1 |
 | `Function2_ClubReportCursor.sql` | פונקציה 2 |
 | `Procedure1_BillingCycle.sql` | פרוצדורה 1 |
@@ -46,25 +45,12 @@
 | `Trigger2_LoginLogInsert.sql` | טריגר 2 |
 | `Main1_BillingAndActivity.sql` | תוכנית ראשית 1 |
 | `Main2_SecurityAndClubs.sql` | תוכנית ראשית 2 |
-| `Demo_Triggers.sql` | תסריט הדגמה לשני הטריגרים |
-| `Screenshots_pgAdmin.sql` | כל בלוקי ההוכחה, בלוק אחד לכל צילום מסך |
-| `HOW_TO_SCREENSHOTS.md` | מדריך תפעולי: הרמת השרת, pgAdmin, וצילום 24 התמונות שלב-שלב |
-| `RunAll.sql` | טוען את כל הרוטינות (psql בלבד) |
+| `Verification.sql` | תרחישי אימות מרוכזים לפונקציות, לפרוצדורות ולטריגרים |
 | `backup4.sql` | גיבוי מעודכן |
 
 ### שיטת ההוכחה
 
-כל תוכנית שמשנה נתונים מודגמת בתוך טרנזקציה שנסגרת ב-**`ROLLBACK`**:
-
-```sql
-BEGIN;
--- צילום מצב "לפני" לתוך טבלה זמנית
-CALL ...;              -- ההרצה
-SELECT ... ;           -- טבלת תוצאה שמציגה לפני ואחרי זה לצד זה
-ROLLBACK;              -- החזרת ה-baseline של שלב ג
-```
-
-בתוך הטרנזקציה השינוי קיים במלואו, ולכן טבלת התוצאה מוכיחה שבסיס הנתונים אכן התעדכן. ה-`ROLLBACK` בסוף מבטיח שהנתונים של שלב ג – ובכללם המספרים שמופיעים בדוח שלב ג – נשארים ללא שינוי. בפונקציות שאינן משנות נתונים אין צורך בטרנזקציה כלל.
+תוכניות שמשנות נתונים הודגמו בתוך טרנזקציה: שאילתות לפני/אחרי מוכיחות את השינוי, ולאחר מכן `ROLLBACK` מחזיר את נתוני הבסיס למצבם המקורי כדי לאפשר הרצה חוזרת של ההדגמה.
 
 ### התקנת התוכניות
 
@@ -74,44 +60,15 @@ ROLLBACK;              -- החזרת ה-baseline של שלב ג
 
 ## 2. הרצת הסביבה
 
-שלב ד הוא הראש הנוכחי של הפרויקט, ולכן **`docker compose up -d` מעלה את בסיס הנתונים המצטבר** – שלב ג (27 טבלאות, 3 מבטים, הגשר) יחד עם רוטינות שלב ד. אין צורך בסביבה נפרדת לכל שלב: שני השלבים מודגמים על אותו `chess_db`.
+`docker compose up -d` מעלה את בסיס הנתונים המצטבר: הסכמה והאינטגרציה של שלב ג יחד עם הרוטינות של שלב ד.
 
 ```bash
 docker compose up -d
 ```
 
-ואז pgAdmin ב-`http://localhost:8080`, בסיס הנתונים `chess_db` על השרת `db` (פורט 5432).
+`backup4.sql` מכיל את בסיס הנתונים המצטבר (27 טבלאות, 3 מבטים, פונקציות, פרוצדורות וטריגרים). Docker טוען אותו בעת אתחול של volume ריק. תרחישי ההדגמה מרוכזים ב-`Verification.sql`, ושתי התוכניות הראשיות נמצאות בקבצים הנפרדים שלהן.
 
-### איך זה עובד
-
-`docker-compose.yml` טוען את `שלב ד/backup4.sql` דרך `/docker-entrypoint-initdb.d`. מנגנון האתחול של PostgreSQL מריץ אותו **רק כשה-volume ריק**, ולכן:
-
-| מתי | מה קורה | זמן |
-|---|---|---|
-| הרצה ראשונה (או אחרי `docker compose down -v`) | `backup4.sql` נטען ובונה את בסיס הנתונים המלא | ~30 שניות |
-| כל הרצה אחרי זה | ה-volume כבר מאותחל, השרת פשוט עולה | ~2 שניות |
-
-סקריפטי האתחול של שלב א נשארו ב-`init-db/` ללא שינוי כתוצר של אותו שלב; הם פשוט אינם מנגנון האתחול יותר, מכיוון שהפלט שלהם כבר מוכל בתוך `backup4.sql`.
-
-> **חשוב לדעת:** Git אינו מסנכרן Docker volumes. במחשב שכבר יש בו volume ישן, `git pull` + `docker compose up -d` יעלה את ה-volume הישן כמו שהוא. כדי לקבל את המצב הסופי צריך **פעם אחת**:
-> ```bash
-> docker compose down -v
-> docker compose up -d
-> ```
-> מכאן והלאה `docker compose up -d` לבד מספיק.
-
-### מה כל אחד מדגים
-
-| שלב | מה להראות | הערה |
-|---|---|---|
-| שלב ג | 27 הטבלאות המשולבות, `uiclient`, עמודת הגשר `login_log.client_id`, ו-3 המבטים | שלושת המבטים מחזירים בדיוק את המספרים שבדוח שלב ג |
-| שלב ד | הפונקציות, הפרוצדורות והטריגרים – דרך `Screenshots_pgAdmin.sql` | כל בלוק הוא הדגמה עצמאית שנגמרת ב-`ROLLBACK` |
-
-הטריגרים של שלב ד **חיים** בבסיס הנתונים הזה. אין לזה השפעה על הדגמת שלב ג – שאילתות `SELECT` והמבטים אינם מושפעים – אבל אם מריצים אד-הוק `UPDATE player SET status_code = 'banned'`, טריגר 1 יופעל וידפיס `NOTICE` על הקסקייד. זו התנהגות מכוונת.
-
-### מה אומת בפועל
-
-הרצנו `docker compose down -v` ואחריו `docker compose up -d` על volume ריק, ובדקנו את התוצאה:
+### בדיקות שבוצעו
 
 | בדיקה | תוצאה |
 |---|---|
@@ -122,26 +79,15 @@ docker compose up -d
 | שחקנים / התחברויות | 510 / 19,095 |
 | שלושת המבטים של שלב ג | מספרים זהים לדוח שלב ג |
 | `שלב ב/Queries.sql` | רץ ללא שגיאה עם הטריגרים מותקנים |
-| כל בלוקי `Screenshots_pgAdmin.sql` | 6 שגיאות בלבד – כולן החריגות המכוונות |
+| כל בלוקי `Verification.sql` | 6 שגיאות בלבד – כולן החריגות המכוונות |
 | `Main1` ו-`Main2` | רצות מקצה לקצה ללא שגיאה |
 | הנתונים אחרי כל ההרצות | ללא שינוי (296/14/200 שחקנים, 14,013 מנויים, 14,945 חברויות) |
 
 ---
 
-## 3. שינויי סכמה – AlterTable.sql
+## 3. שינויי סכמה
 
-**לא נדרש שום שינוי מבני בשלב ד.** כל התוכניות פועלות ישירות על הסכמה של שלב ג.
-
-ההחלטות שאיפשרו זאת:
-
-1. **לא הוספנו טבלאות audit או log.** ההוכחה שתוכנית רצה מסופקת באמצעות `RAISE NOTICE`, `RAISE EXCEPTION` ושאילתות לפני/אחרי – בדיוק מה שנדרש לצלם לדוח.
-2. **לא הוספנו עמודות מחושבות** כמו `total_logins` או `last_login_date`. כל ערך שהתוכניות צריכות מחושב מהנתונים הקיימים בזמן ריצה.
-3. **`fn_player_activity_score` מחזירה את הציון** ולא שומרת אותו, ולכן אין צורך בטבלת תוצאות.
-4. **חלונות הזמן נמדדים מ-`MAX(login_log.login_date)`** (הרשומה החדשה בנתונים היא 2026-03-24) ולא מ-`CURRENT_DATE`, ולכן לא היה צורך להזיז תאריכים או להוסיף נתונים.
-
-הקובץ `AlterTable.sql` נשמר בהגשה כדי לתעד את ההחלטה במפורש, והוא נקי מ-DDL.
-
-> **הערה על ערכי lookup:** לפני הכתיבה בדקנו אילו קודים קיימים בפועל בנתונים ולא הסתמכנו על טבלאות ה-lookup (שמרופדות בקודי דמה). הערכים שבשימוש: `player_status` → `active`/`suspended`/`banned`; `membership_status` → `active`/`left`/`pending`/`banned`; `subscription_status` → `active`/`expired`/`cancelled`/`paused`; `billing_cycle` → `monthly`/`annual`; `login_status` → `success`/`failed`/`blocked`.
+לא בוצעו שינויי סכמה בשלב ד, ולכן לא נדרש `AlterTable.sql`. כל התוכניות פועלות ישירות על הסכמה המשולבת של שלב ג.
 
 ---
 
@@ -432,7 +378,7 @@ SELECT fn_club_report('IL', -5);
 
 **למה `next_billing_date` ולא `end_date`:** בדקנו את הנתונים של שלב ג ומצאנו ש-`end_date` הוא `NULL` בכל 14,013 המנויים הפעילים, בעוד `next_billing_date` מלא ורובו בעבר. זו העמודה היחידה שיכולה להניע מחזור חיוב אמיתי.
 
-כל שורה מטופלת בתוך בלוק `EXCEPTION` משלה, כך ששורה בעייתית מדווחת ב-`RAISE WARNING` והלולאה ממשיכה – פרוצדורה שעוברת על עשרות שורות לא צריכה ליפול בגלל אחת. הפרמטר `p_limit` קיים כי **13,227 מנויים** עומדים בתנאי כרגע, וההדגמה מעבדת מספר מוגבל כדי שהפלט יישאר קריא.
+כל שורה מטופלת בתוך בלוק `EXCEPTION` משלה, כך ששורה בעייתית מדווחת ב-`RAISE WARNING` והלולאה ממשיכה. הפרמטר `p_limit` מאפשר לעבד את המנויים במנות מבוקרות.
 
 ### אלמנטים
 
@@ -552,38 +498,15 @@ ROLLBACK;
 
 ![פרוצדורה 1 – הוכחה](screenshots/08_sp1_proof.png)
 
-בטבלה רואים את **שני הענפים באותו צילום**:
-
-| subscription_id | auto_renew | date_before | date_after | status_before | status_after |
-|---|---|---|---|---|---|
-| 5050 | t | 2018-02-20 | **2018-03-20** | active | active |
-| 428 | t | 2018-02-25 | **2018-03-25** | active | active |
-| 19456 | f | 2018-04-12 | 2018-04-12 | active | **expired** |
-| 4087 | f | 2018-04-25 | 2018-04-25 | active | **expired** |
-
-שורות `auto_renew = t` – התאריך התקדם בחודש בדיוק. שורות `auto_renew = f` – התאריך לא נגוע והסטטוס עבר ל-`expired`.
-
-**פלט הפרוצדורה** (לשונית Messages):
-
-```
-NOTICE:  Billing run starting, as of 2026-08-18, limit 50 subscription(s)
-NOTICE:  Billing run finished: 35 renewed, 15 expired, 0 error(s)
-```
+הצילום מציג את שני ענפי הפרוצדורה: במנויים עם `auto_renew = TRUE` תאריך החיוב מתקדם לפי מחזור החיוב, ובאחרים הסטטוס משתנה ל-`expired`.
 
 ![פרוצדורה 1 – פלט](screenshots/08_sp1_messages.png)
 
-**סיכום כמותי** – איך השתנתה כל ספירת סטטוס:
+**סיכום כמותי של השינוי בסטטוסים:**
 
 ![פרוצדורה 1 – ספירות](screenshots/09_sp1_counts.png)
 
-| status_code | before_count | after_count | delta |
-|---|---|---|---|
-| active | 14013 | 13998 | **-15** |
-| cancelled | 1964 | 1964 | 0 |
-| expired | 2996 | 3011 | **+15** |
-| paused | 1035 | 1035 | 0 |
-
-15 המנויים שפקעו עברו מ-`active` ל-`expired`, בהתאמה מדויקת לפלט הפרוצדורה.
+ההרצה חידשה 35 מנויים והעבירה 15 מנויים מ-`active` ל-`expired`, ללא שגיאות.
 
 ---
 
@@ -734,7 +657,7 @@ $$;
 
 ### הוכחת הרצה
 
-הפרמטרים כויילו לפי הנתונים: **3000 ימים** מכסים את כל היסטוריית ההתחברויות (2018-01 עד 2026-03), **20** התחברויות מינימום, ו-**15%** כסף – בעוד הממוצע בפלטפורמה הוא 8.8%, כך ש-15% הוא באמת חריג.
+בהדגמה נבדק חלון של 3000 ימים, נדרשו לפחות 20 התחברויות, וסף הפעילות החשודה נקבע ל-15%.
 
 ```sql
 BEGIN;
@@ -765,34 +688,14 @@ ROLLBACK;
 
 ![פרוצדורה 2 – הוכחה](screenshots/10_sp2_proof.png)
 
-| table_name | status_code | before_count | after_count | delta |
-|---|---|---|---|---|
-| club_membership | active | 14945 | 14909 | **-36** |
-| club_membership | banned | 601 | 637 | **+36** |
-| club_membership | left | 2809 | 2809 | 0 |
-| club_membership | pending | 979 | 912 | **-67** |
-| player | active | 296 | 275 | **-21** |
-| player | banned | 14 | 15 | **+1** |
-| player | suspended | 200 | 220 | **+20** |
-
-הטבלה מוכיחה **שני דברים בצילום אחד**:
+הצילום מוכיח שני אפקטים מרכזיים:
 
 1. **הפרוצדורה עבדה** – 21 שחקנים עזבו את `active`: 20 הושעו ואחד נחסם, ו-67 בקשות חברות `pending` של אותם 21 שחקנים נמחקו על ידי ה-`DELETE`.
-2. **טריגר 1 עבד** – 36 חברויות עברו מ-`active` ל-`banned`, למרות שהפרוצדורה **לא מעדכנת את `club_membership` בכלל** – בדיוק המספר שהטריגר דיווח עליו ב-`NOTICE` עבור השחקן שנחסם. שימו לב להפרדה: שורת ה-`-67` היא שלנו, שורות ה-`-36/+36` הן של הטריגר.
-
-**פלט הפרוצדורה** (לשונית Messages) – שימו לב שה-`NOTICE` של הטריגר מופיע מיד לפני שורת השחקן שנחסם:
-
-```
-NOTICE:  Security review window: 2018-01-05 .. 2026-03-24  (threshold 15.0 percent)
-NOTICE:  Player 194 banned -> 36 active club membership(s) set to banned
-NOTICE:    player 194 (avibiton194) -> banned : 11 of 47 logins suspicious (23.40 percent), main client: Analysis Dashboard, 1 pending membership(s) removed
-NOTICE:    player 342 (mayaazoulay342) -> suspended : 7 of 33 logins suspicious (21.21 percent), main client: Chess Web Portal, 10 pending membership(s) removed
-NOTICE:    player 191 (shirabendavid191) -> suspended : 8 of 43 logins suspicious (18.60 percent), main client: Analysis Dashboard, 4 pending membership(s) removed
-...
-NOTICE:  Security review finished: 296 player(s) checked, 275 below threshold, 20 suspended, 1 banned, 67 pending membership(s) deleted
-```
+2. **טריגר 1 עבד** – שינוי סטטוס השחקן ל-`banned` הפעיל את הטריגר, שסנכרן 36 חברויות פעילות ל-`banned`. הפרוצדורה עצמה אינה מעדכנת חברויות פעילות.
 
 ![פרוצדורה 2 – פלט](screenshots/10_sp2_messages.png)
+
+בסך הכול נבדקו 296 שחקנים: 20 הושעו, שחקן אחד נחסם ו-67 בקשות חברות ממתינות נמחקו.
 
 **חריגה – פרמטרים לא חוקיים:**
 
@@ -889,10 +792,7 @@ ROLLBACK;
 
 ![טריגר 1 – דחייה](screenshots/12_trg1_reject.png)
 
-```
-ERROR:  Rating change too large for player 1 (max 400 points per update):
-        classical 956->1456, rapid 2328->2328, blitz 730->730
-```
+הטריגר זרק חריגה והשינוי לא בוצע.
 
 **תרחיש ב – שינוי חוקי עובר.** אותו שחקן, תוספת של 50 נקודות:
 
@@ -912,28 +812,13 @@ ROLLBACK;
 
 ![טריגר 1 – מעבר](screenshots/13_trg1_pass.png)
 
-| player_id | username | value_before | value_after |
-|---|---|---|---|
-| 1 | tomercohen001 | 956 | **1006** |
+הדירוג השתנה מ-956 ל-1006, ולכן שינוי חוקי של 50 נקודות עבר בהצלחה.
 
 **תרחיש ג – הקסקייד.** בוחרים את השחקן הפעיל עם מספר החברויות הפעילות הגדול ביותר, חוסמים אותו, ומשווים את מצב החברויות שלו:
 
 ![טריגר 1 – קסקייד](screenshots/14_trg1_cascade.png)
 
-| banned_player | status_code | before_count | after_count |
-|---|---|---|---|
-| adidahan107 | active | **47** | **0** |
-| adidahan107 | banned | 2 | **49** |
-| adidahan107 | left | 9 | 9 |
-| adidahan107 | pending | 6 | 6 |
-
-כל 47 החברויות הפעילות עברו ל-`banned` (2 + 47 = 49), וה-`left`/`pending` לא נגעו – בדיוק כפי שהטריגר מגדיר.
-
-**ה-`NOTICE` של הטריגר:**
-
-```
-NOTICE:  Player 107 banned -> 47 active club membership(s) set to banned
-```
+כל 47 החברויות הפעילות של השחקן עברו ל-`banned`, בעוד חברויות בסטטוסים אחרים לא השתנו.
 
 ![טריגר 1 – פלט הקסקייד](screenshots/14_trg1_cascade_messages.png)
 
@@ -1047,20 +932,7 @@ ROLLBACK;
 
 ![טריגר 2 – השלמה](screenshots/15_trg2_complete.png)
 
-השורה שנשמרה בפועל:
-
-| log_id | player_id | device_type | client_id | login_status_code | failure_reason |
-|---|---|---|---|---|---|
-| 20001 | 1 | mobile | **2** | success | *(NULL)* |
-
-`client_id` הושלם ל-2 (`Mobile Chess Pro`, אפליקציית Mobile) כי המכשיר הוא `mobile`, ו-`failure_reason` נוקה.
-
-**פלט הטריגר:**
-
-```
-NOTICE:  login_log: client_id filled with 2 for device_type mobile
-NOTICE:  login_log: failure_reason cleared for successful login of player 1
-```
+`client_id` הושלם ל-2 בהתאם למכשיר `mobile`, ו-`failure_reason` נוקה משום שההתחברות הצליחה.
 
 ![טריגר 2 – פלט](screenshots/15_trg2_complete_messages.png)
 
@@ -1068,9 +940,7 @@ NOTICE:  login_log: failure_reason cleared for successful login of player 1
 
 ![טריגר 2 – דחייה](screenshots/16_trg2_reject.png)
 
-```
-ERROR:  Player 79 is banned - login cannot be recorded
-```
+הטריגר זרק חריגה ולא נוצרה רשומת התחברות עבור השחקן החסום.
 
 ---
 
@@ -1129,21 +999,7 @@ END $$;
 
 ### הוכחת הרצה
 
-**פלט התוכנית** – הפרוצדורה והפונקציה שתיהן רצו:
-
-```
-NOTICE:  Billing run starting, as of 2026-08-18, limit 50 subscription(s)
-NOTICE:  Billing run finished: 35 renewed, 15 expired, 0 error(s)
-NOTICE:
-NOTICE:  Procedure returned: renewed=35, expired=15
-NOTICE:
-NOTICE:  Activity score of the 5 highest rated active players:
-NOTICE:    gilohana211 (id=211, rating 2800) -> activity score 39.75
-NOTICE:    gayamalka408 (id=408, rating 2800) -> activity score 41.01
-NOTICE:    davidyosef398 (id=398, rating 2799) -> activity score 46.20
-NOTICE:    amirmalka434 (id=434, rating 2795) -> activity score 50.48
-NOTICE:    shirabendavid191 (id=191, rating 2783) -> activity score 44.10
-```
+**פלט התוכנית** – הפרוצדורה החזירה את ספירות החידוש והפקיעה, ולאחריה הודפס ציון הפעילות של חמשת השחקנים בעלי הדירוג הגבוה ביותר:
 
 ![תוכנית ראשית 1 – פלט](screenshots/17_main1_messages.png)
 
@@ -1151,11 +1007,7 @@ NOTICE:    shirabendavid191 (id=191, rating 2783) -> activity score 44.10
 
 ![תוכנית ראשית 1 – הוכחה](screenshots/18_main1_proof.png)
 
-| subscription_id | billing_cycle_code | date_before | date_after | days_advanced | status_code |
-|---|---|---|---|---|---|
-| 5050 | monthly | 2018-02-20 | **2018-03-20** | 28 | active |
-
-התאריך התקדם בחודש קלנדרי אחד בדיוק, כפי שה-`CASE` על `billing_cycle_code` מגדיר.
+תאריך החיוב של המנוי שנבחר התקדם בחודש קלנדרי אחד, כפי שמגדיר ה-`CASE` על `billing_cycle_code`.
 
 ---
 
@@ -1223,28 +1075,7 @@ END $$;
 
 ### הוכחת הרצה
 
-**פלט התוכנית** – הפרוצדורה, ואחריה השורות שנשלפו מהקורסור:
-
-```
-NOTICE:  Security review window: 2018-01-05 .. 2026-03-24  (threshold 15.0 percent)
-NOTICE:  Player 194 banned -> 36 active club membership(s) set to banned
-NOTICE:    player 194 (avibiton194) -> banned : 11 of 47 logins suspicious (23.40 percent), main client: Analysis Dashboard, 1 pending membership(s) removed
-...
-NOTICE:  Security review finished: 296 player(s) checked, 275 below threshold, 20 suspended, 1 banned, 67 pending membership(s) deleted
-NOTICE:
-NOTICE:  19 club(s) match country=ALL, min_members=40
-NOTICE:  Club report (first 10 rows of the returned cursor):
-NOTICE:    Herzliya Chess Club 252 [Large] - 49 members, avg rating 1686, 5 leader(s), country NL
-NOTICE:    Ramat Gan Chess Club 327 [Large] - 45 members, avg rating 1758, 4 leader(s), country PL
-NOTICE:    Tel Aviv Chess Club 439 [Large] - 45 members, avg rating 1829, 7 leader(s), country JP
-NOTICE:    Jerusalem Chess Club 426 [Medium] - 44 members, avg rating 1670, 4 leader(s), country JP
-NOTICE:    Tokyo Chess Club 068 [Medium] - 44 members, avg rating 1728, 8 leader(s), country DE
-NOTICE:    Beer Sheva Chess Club 152 [Medium] - 43 members, avg rating 1567, 5 leader(s), country IL
-NOTICE:    Beer Sheva Chess Club 466 [Medium] - 42 members, avg rating 1730, 4 leader(s), country DE
-NOTICE:    Petah Tikva Chess Club 323 [Medium] - 42 members, avg rating 1794, 3 leader(s), country JP
-NOTICE:    Givatayim Chess Club 191 [Small] - 41 members, avg rating 1906, 3 leader(s), country CA
-NOTICE:    Givatayim Chess Club 460 [Small] - 41 members, avg rating 1736, 6 leader(s), country JP
-```
+**פלט התוכנית** – הפרוצדורה מדווחת על פעולות סקירת האבטחה, ולאחריה התוכנית שולפת ומדפיסה עשר רשומות מה-`REF CURSOR` שהחזירה הפונקציה:
 
 ![תוכנית ראשית 2 – פלט](screenshots/19_main2_messages.png)
 
@@ -1252,12 +1083,7 @@ NOTICE:    Givatayim Chess Club 460 [Small] - 41 members, avg rating 1736, 6 lea
 
 ![תוכנית ראשית 2 – אחרי](screenshots/20_main2_after.png)
 
-| status_code | memberships |
-|---|---|
-| active | **14909** (במקום 14945) – טריגר 1 |
-| banned | **637** (במקום 601) – טריגר 1 |
-| left | 2809 |
-| pending | **912** (במקום 979) – ה-`DELETE` שבפרוצדורה |
+הצילום מציג הן את מחיקת החברויות הממתינות על ידי הפרוצדורה והן את שינוי החברויות הפעילות בעקבות הטריגר.
 
 ---
 
@@ -1284,7 +1110,7 @@ NOTICE:    Givatayim Chess Club 460 [Small] - 41 members, avg rating 1736, 6 lea
 | 2 פרוצדורות | `sp_process_billing_cycle`, `sp_security_review` |
 | 2 טריגרים, לפחות אחד ב-UPDATE | `trg_player_update` (**BEFORE UPDATE**), `trg_login_log_insert` (BEFORE INSERT) |
 | 2 תוכניות ראשיות, כל אחת פונקציה + פרוצדורה | Main1 = Sp1 + Fn1 · Main2 = Sp2 + Fn2 |
-| `AlterTable.sql` | קיים – מתעד שלא נדרשו שינויי סכמה |
+| שינויי סכמה | לא בוצעו, ולכן לא נדרש `AlterTable.sql` |
 | `backup4` | `backup4.sql` – נבדק בשחזור לבסיס נקי: 6 רוטינות, 2 טריגרים, 27 טבלאות, 3 מבטים, 510 שחקנים |
 | דוח שלב ד | קובץ זה |
 

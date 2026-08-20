@@ -10,8 +10,8 @@
 -- so the Phase C baseline is not modified. The effect of the procedure
 -- is fully visible in the "AFTER" queries, which run before the ROLLBACK.
 --
--- Pure SQL - no psql meta-commands - so it runs both in psql and in the
--- pgAdmin Query Tool. For screenshots, execute one STEP at a time.
+-- Pure SQL with no psql meta-commands, so it runs in both psql and pgAdmin.
+-- The STEP headings make the program convenient to demonstrate interactively.
 -- ============================================================
 
 BEGIN;

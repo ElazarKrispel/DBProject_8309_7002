@@ -90,7 +90,7 @@ CREATE TRIGGER trg_login_log_insert
 
 
 -- ============================================================
--- DEMO – see Demo_Triggers.sql for the full runnable script
+-- VERIFICATION – see blocks 15-16 in Verification.sql
 -- ============================================================
 -- (a) client_id is completed and failure_reason is cleared:
 --       INSERT INTO login_log

@@ -1,27 +1,20 @@
 -- ============================================================
--- Chess Platform – Phase D  |  Screenshots_pgAdmin.sql
+-- Chess Platform – Phase D  |  Verification.sql
 -- Students: Elazar Krispel (8309), Alon Greenstein (7002)
 --
--- One block = one screenshot for the Phase D report.
---
--- HOW TO USE (pgAdmin 4):
---   1. Open the Query Tool on chess_db.
---   2. Open this file.
---   3. For each block below: select the block with the mouse and press F5.
---   4. Save the screenshot under the file name written in the block header.
---
--- Blocks marked [DATA] -> screenshot the "Data Output" tab.
--- Blocks marked [MSG]  -> screenshot the "Messages" tab.
--- Blocks marked [DATA+MSG] -> two screenshots, one of each tab.
---
--- Every block that changes data is wrapped in BEGIN ... ROLLBACK, so the
--- database is left exactly as it was. The change is fully visible in the
--- result grid, which is produced before the ROLLBACK.
+-- This file centralizes short verification scenarios for the two functions,
+-- two procedures and two triggers. Run one numbered block at a time.
+-- Blocks that intentionally raise an exception must be executed separately.
+-- Data-changing scenarios use a transaction and end with ROLLBACK so they can
+-- be demonstrated repeatedly without changing the baseline data.
+-- In pgAdmin, to inspect a result grid from a transactional block, execute
+-- through its final SELECT/FETCH first, then execute the closing ROLLBACK or
+-- COMMIT separately in the same Query Tool session.
 -- ============================================================
 
 
 -- ============================================================
--- BLOCK 01  [DATA]   ->  01_install.png
+-- BLOCK 01 - installed Phase D objects
 -- Proof that all Phase D programs are installed.
 -- ============================================================
 SELECT p.proname AS name,
@@ -45,7 +38,7 @@ ORDER  BY 2, 1;
 -- ============================================================
 
 -- ============================================================
--- BLOCK 02  [DATA]   ->  02_fn1_run.png
+-- BLOCK 02 - normal function run
 -- Normal run: different players get different scores.
 -- ============================================================
 SELECT p.player_id,
@@ -59,7 +52,7 @@ LIMIT  10;
 
 
 -- ============================================================
--- BLOCK 03  [MSG]    ->  03_fn1_err_player.png
+-- BLOCK 03 - nonexistent-player exception
 -- Exception: the player does not exist.
 -- Expected: ERROR: Player 999999 does not exist
 -- ============================================================
@@ -67,7 +60,7 @@ SELECT fn_player_activity_score(999999);
 
 
 -- ============================================================
--- BLOCK 04  [MSG]    ->  04_fn1_err_param.png
+-- BLOCK 04 - invalid-parameter exception
 -- Exception: illegal parameter.
 -- Expected: ERROR: p_days_back must be positive (got -10)
 -- ============================================================
@@ -79,8 +72,10 @@ SELECT fn_player_activity_score(1, -10);
 -- ============================================================
 
 -- ============================================================
--- BLOCK 05  [DATA]   ->  05_fn2_israel.png
--- Ref cursor with a country filter. Select ALL FOUR lines together.
+-- BLOCK 05 - refcursor with a country filter
+-- Ref cursor with a country filter.
+-- BEGIN, function call and FETCH must use the same database session because
+-- the cursor exists only inside its transaction.
 -- ============================================================
 BEGIN;
 SELECT fn_club_report('IL', 25);
@@ -89,7 +84,7 @@ COMMIT;
 
 
 -- ============================================================
--- BLOCK 06  [DATA]   ->  06_fn2_all.png
+-- BLOCK 06 - refcursor without a country filter
 -- Ref cursor without a country filter (the other IF branch).
 -- ============================================================
 BEGIN;
@@ -99,7 +94,7 @@ COMMIT;
 
 
 -- ============================================================
--- BLOCK 07  [MSG]    ->  07_fn2_err_param.png
+-- BLOCK 07 - negative-threshold exception
 -- Exception: negative threshold.
 -- Expected: ERROR: p_min_members cannot be negative (got -5)
 -- ============================================================
@@ -111,7 +106,7 @@ SELECT fn_club_report('IL', -5);
 -- ============================================================
 
 -- ============================================================
--- BLOCK 08  [DATA+MSG] -> 08_sp1_proof.png  +  08_sp1_messages.png
+-- BLOCK 08 - billing updates, before and after
 -- One grid that proves the update: for every subscription the procedure
 -- renewed, the billing date before and after, side by side.
 -- ============================================================
@@ -152,8 +147,8 @@ ROLLBACK;
 
 
 -- ============================================================
--- BLOCK 09  [DATA]   ->  09_sp1_counts.png
--- The same run, summarised: how each status count changed.
+-- BLOCK 09 - billing status counts
+-- The same run, summarized by status.
 -- ============================================================
 BEGIN;
 
@@ -184,7 +179,7 @@ ROLLBACK;
 -- ============================================================
 
 -- ============================================================
--- BLOCK 10  [DATA+MSG] -> 10_sp2_proof.png  +  10_sp2_messages.png
+-- BLOCK 10 - security review effects
 -- One grid that proves three effects at once:
 --   * player                    - status changed by the procedure (UPDATE)
 --   * club_membership 'pending' - rows deleted by the procedure (DELETE)
@@ -218,7 +213,7 @@ ROLLBACK;
 
 
 -- ============================================================
--- BLOCK 11  [MSG]    ->  11_sp2_err_param.png
+-- BLOCK 11 - invalid-parameter exception
 -- Exception: illegal parameters.
 -- Expected: ERROR: invalid parameters: days_back=0, min_logins=20, threshold=15.0
 -- ============================================================
@@ -230,7 +225,7 @@ CALL sp_security_review(0, 20, 15.0);
 -- ============================================================
 
 -- ============================================================
--- BLOCK 12  [MSG]    ->  12_trg1_reject.png
+-- BLOCK 12 - reject an excessive rating change
 -- The guard rejects a rating jump of +500.
 -- Expected: ERROR: Rating change too large for player 1 ...
 -- No transaction is needed: the statement fails, so nothing is changed.
@@ -239,7 +234,7 @@ UPDATE player SET rating_classical = rating_classical + 500 WHERE player_id = 1;
 
 
 -- ============================================================
--- BLOCK 13  [DATA]   ->  13_trg1_pass.png
+-- BLOCK 13 - accept a legal rating change
 -- A legal change of +50 passes: before and after in one row.
 -- ============================================================
 BEGIN;
@@ -259,10 +254,10 @@ ROLLBACK;
 
 
 -- ============================================================
--- BLOCK 14  [DATA+MSG] -> 14_trg1_cascade.png  +  14_trg1_cascade_messages.png
+-- BLOCK 14 - player-ban cascade
 -- The ban cascade: all active memberships of the banned player become
 -- 'banned'. before_count / after_count in one grid, and the trigger's
--- NOTICE in the Messages tab.
+-- NOTICE reports the number of affected memberships.
 -- ============================================================
 BEGIN;
 
@@ -307,7 +302,7 @@ ROLLBACK;
 -- ============================================================
 
 -- ============================================================
--- BLOCK 15  [DATA+MSG] -> 15_trg2_complete.png  +  15_trg2_complete_messages.png
+-- BLOCK 15 - normalize an inserted login row
 -- The INSERT supplies log_id but leaves client_id empty and wrongly puts
 -- a failure_reason on a successful login. The trigger fills client_id and
 -- clears failure_reason.
@@ -336,7 +331,7 @@ ROLLBACK;
 
 
 -- ============================================================
--- BLOCK 16  [MSG]    ->  16_trg2_reject.png
+-- BLOCK 16 - reject a login from a banned player
 -- A banned player cannot record a login.
 -- Expected: ERROR: Player 79 is banned - login cannot be recorded
 -- No transaction is needed: the statement fails, so nothing is changed.
@@ -355,31 +350,13 @@ SELECT
 
 -- ============================================================
 -- MAIN PROGRAM 1
--- Open Main1_BillingAndActivity.sql in the Query Tool.
---
---   17_main1_messages.png   [MSG]
---       Select the whole file (Ctrl+A) and press F5.
---       Screenshot the Messages tab: the procedure output plus the five
---       activity scores printed by the function.
---
---   18_main1_proof.png      [DATA]
---       Select STEP 1 up to and including STEP 5 and press F5.
---       Screenshot the grid: subscription 5050, monthly,
---       date_before 2018-02-20 -> date_after 2018-03-20.
+-- Run Main1_BillingAndActivity.sql. It calls sp_process_billing_cycle and
+-- fn_player_activity_score and includes before/after verification queries.
 -- ============================================================
 
 
 -- ============================================================
 -- MAIN PROGRAM 2
--- Open Main2_SecurityAndClubs.sql in the Query Tool.
---
---   19_main2_messages.png   [MSG]
---       Select the whole file (Ctrl+A) and press F5.
---       Screenshot the Messages tab: the security review decisions plus
---       the ten club rows fetched from the returned REF CURSOR.
---
---   20_main2_after.png      [DATA]
---       Select STEP 1 up to and including STEP 5 and press F5.
---       Screenshot the grid: club memberships by status after the run
---       (active 14909 / banned 637) - changed by Trigger 1.
+-- Run Main2_SecurityAndClubs.sql. It calls sp_security_review and
+-- fn_club_report, consumes the returned cursor and verifies the DML effects.
 -- ============================================================

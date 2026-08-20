@@ -75,7 +75,7 @@ CREATE TRIGGER trg_player_update
 
 
 -- ============================================================
--- DEMO – see Demo_Triggers.sql for the full runnable script
+-- VERIFICATION – see blocks 12-14 in Verification.sql
 -- ============================================================
 -- (a) illegal rating jump is rejected:
 --       UPDATE player SET rating_classical = rating_classical + 500
