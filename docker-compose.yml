@@ -3,7 +3,10 @@ services:
   # PostgreSQL Database
   # -------------------------
   db:
-    image: postgres:latest
+    # Pinned to 18 on purpose: the persistent volume holds PostgreSQL 18 data
+    # files, and a future move of the "latest" tag to a new major version would
+    # refuse to start on them.
+    image: postgres:18
     container_name: PostgreSQL_DB
     restart: always
     environment:
@@ -13,7 +16,15 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./init-db:/docker-entrypoint-initdb.d
+      # Bootstrap on an EMPTY volume only. Phase D is the current head of the
+      # project, so a fresh clone comes up with the cumulative database:
+      # Phase C (27 tables, 3 views, the integration bridge) + Phase D
+      # (2 functions, 2 procedures, 2 triggers).
+      #
+      # The Phase A scripts in "./שלב א" are kept unchanged in the repository as
+      # that phase's deliverable; they are simply no longer the bootstrap, since
+      # their output is already contained in backup4.sql.
+      - ./שלב ד/backup4.sql:/docker-entrypoint-initdb.d/01_restore_backup4.sql:ro
       - postgres_data:/var/lib/postgresql
     networks:
       - chess_network
