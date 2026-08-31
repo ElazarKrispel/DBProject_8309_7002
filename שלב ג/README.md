@@ -56,8 +56,6 @@
 
 ![DSD של האגף החדש](screenshots/newdept_dsd.png)
 
-> **הוראות הפקת התמונה:** היכנס ל-[erdplus.com](https://erdplus.com) → התחבר → תפריט **Import** → בחר את `שלב ג/Diagrams/NewDept_DSD.erdplus` → הדיאגרמה תיפתח כ-Relational Schema → סדר את הטבלאות לקריאות נוחה → **Export → PNG** → שמור בשם `screenshots/newdept_dsd.png`.
-
 ---
 
 ## 4. הינדוס לאחור
@@ -93,8 +91,6 @@
 
 ![ERD של האגף החדש](screenshots/newdept_erd.png)
 
-> **הוראות הפקת התמונה:** [erdplus.com](https://erdplus.com) → **Import** → `שלב ג/Diagrams/NewDept_ERD.erdplus` → הדיאגרמה תיפתח כ-ER Diagram → גרור את הישויות והתכונות לפריסה נוחה (הקובץ נוצר אוטומטית – ייתכן שיהיה צורך לסדר) → **Export → PNG** → `screenshots/newdept_erd.png`.
-
 > **הערה על הסימון:** תתי-הטיפוס (`LocalEngine`/`CloudEngine`), הישויות החלשות (`ServerComponent`/`HardwareTelemetry`) והקשרים המזהים מסומנים בתרשים באמצעות קשרים מתאימים (קשר מזהה = `isIdentifying`). הסיווג המלא מפורט באלגוריתם בסעיף 4.
 
 ---
@@ -108,8 +104,6 @@
 <!-- TODO: ייבא את שלב ג/Diagrams/Integrated_ERD.erdplus ל-erdplus.com ויצא PNG בשם integrated_erd.png -->
 
 ![ERD משולב](screenshots/integrated_erd.png)
-
-> **הוראות:** [erdplus.com](https://erdplus.com) → **Import** → `שלב ג/Diagrams/Integrated_ERD.erdplus` → סדר את הישויות (האגף שלנו משמאל, אגף התשתית מימין, הגשר באמצע) → **Export → PNG** → `screenshots/integrated_erd.png`.
 
 ### החלטות האינטגרציה (תיעוד)
 
@@ -136,8 +130,6 @@
 <!-- TODO: ייבא את שלב ג/Diagrams/Integrated_DSD.erdplus ל-erdplus.com ויצא PNG בשם integrated_dsd.png -->
 
 ![DSD לאחר אינטגרציה](screenshots/integrated_dsd.png)
-
-> **הוראות:** [erdplus.com](https://erdplus.com) → **Import** → `שלב ג/Diagrams/Integrated_DSD.erdplus` → **Export → PNG** → `screenshots/integrated_dsd.png`. שים לב לחץ ה-FK החדש מ-`LOGIN_LOG` אל `UICLIENT` – זהו הגשר.
 
 ---
 
