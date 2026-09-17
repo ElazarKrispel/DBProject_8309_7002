@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme="light">
+    <MantineProvider theme={theme} defaultColorScheme="light" cssVariablesResolver={(resolved) => ({ variables: {}, light: { '--mantine-color-dimmed': resolved.colors.gray[7], '--mantine-color-placeholder': resolved.colors.gray[7] }, dark: { '--mantine-color-dimmed': resolved.colors.dark[1], '--mantine-color-placeholder': resolved.colors.dark[1] } })}>
       <ModalsProvider>
         <Notifications position="top-right" />
         <QueryClientProvider client={queryClient}>
@@ -37,3 +37,5 @@ createRoot(document.getElementById('root')!).render(
     </MantineProvider>
   </StrictMode>,
 )
+
+

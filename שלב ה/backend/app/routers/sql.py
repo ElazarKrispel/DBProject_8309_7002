@@ -5,6 +5,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 import psycopg
+import sqlparse
 from pydantic import BaseModel
 
 from .. import db
@@ -32,7 +33,17 @@ def run_sql(body: SqlBody):
     text = body.sql.strip()
     if not text:
         raise HTTPException(status_code=400, detail={"message": "SQL is empty", "code": "400", "hint": None})
-    readonly = first_keyword(text) in READ_KEYWORDS
+    statements = sqlparse.parse(text)
+    transaction_commands = {"BEGIN", "START", "COMMIT", "END", "ROLLBACK", "ABORT", "SAVEPOINT", "RELEASE", "PREPARE"}
+    for statement in statements:
+        normalized = sqlparse.format(str(statement), strip_comments=True).strip()
+        if first_keyword(normalized) in transaction_commands:
+            raise HTTPException(status_code=400, detail={"message": "Use Preview or Apply to control the transaction; explicit transaction commands are not supported.", "code": "400", "hint": "Remove BEGIN, COMMIT or ROLLBACK and run the SQL again."})
+    readonly = all(
+        first_keyword(sqlparse.format(str(statement), strip_comments=True)) in READ_KEYWORDS
+        and not any(token.normalized in {"INSERT", "UPDATE", "DELETE", "MERGE", "CALL"} for token in statement.flatten())
+        for statement in statements
+    )
     started = time.perf_counter()
     result = {"ok": True, "columns": [], "rows": [], "rowcount": 0, "elapsed_ms": 0.0,
               "notices": [], "truncated": False, "readonly": readonly}
@@ -47,7 +58,7 @@ def run_sql(body: SqlBody):
                     result["rowcount"] = cur.rowcount if cur.rowcount >= 0 else len(result["rows"])
                     if not cur.nextset():
                         break
-            if readonly or body.mode == "apply":
+            if body.mode == "apply":
                 conn.commit()
             else:
                 conn.rollback()

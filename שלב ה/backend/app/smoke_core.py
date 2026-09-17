@@ -97,7 +97,7 @@ def main() -> None:
             check(r.status_code == 200, f"create club ({r.text[:200]})")
             club = r.json()["row"]
             club_id = club["club_id"]
-            check(club["club_name"] == "Smoke Test Club" and club["city"] is None and club["founded_date"] is None, "create club: '' -> NULL, id generated")
+            check(club["club_name"] == "Smoke Test Club" and club["city"] is None and club["founded_date"] is None, "create club: '' -> NULL, automatic id")
             r = c.put("/api/tables/club", params={"club_id": club_id}, json={"city": "Haifa", "club_id": 1, "bogus": 1})
             check(r.status_code == 200 and r.json()["row"]["city"] == "Haifa" and r.json()["row"]["club_id"] == club_id, "update club ignores pk and unknown keys")
             check(c.put("/api/tables/club", params={"club_id": 999999999}, json={"city": "X"}).status_code == 404, "update missing -> 404")
@@ -144,6 +144,14 @@ def main() -> None:
         r = c.post("/api/sql", json={"sql": "UPDATE club SET city = 'Smoke Preview' WHERE club_id = 1", "mode": "preview"}).json()
         check(r["ok"] and r["rowcount"] == 1 and not r["readonly"], "sql preview update rowcount 1")
         check(c.get("/api/tables/club/row", params={"club_id": 1}).json()["city"] == city, "sql preview did not persist")
+        for statement in (
+            "SELECT 1; UPDATE club SET city = 'Batch Preview' WHERE club_id = 1 RETURNING city",
+            "WITH changed AS (UPDATE club SET city = 'CTE Preview' WHERE club_id = 1 RETURNING city) SELECT * FROM changed",
+        ):
+            preview = c.post("/api/sql", json={"sql": statement, "mode": "preview"}).json()
+            check(preview["ok"] and not preview["readonly"], "mixed SQL preview reports a write")
+            check(c.get("/api/tables/club/row", params={"club_id": 1}).json()["city"] == city, "mixed SQL preview did not persist")
+        check(c.post("/api/sql", json={"sql": "SELECT 1; COMMIT", "mode": "preview"}).status_code == 400, "explicit transaction commands rejected")
         r = c.post("/api/sql", json={"sql": "-- comment\nSELECT club_id, club_name FROM club ORDER BY club_id LIMIT 3"}).json()
         check(r["ok"] and r["readonly"] and r["columns"] == ["club_id", "club_name"] and len(r["rows"]) == 3, "sql select")
         r = c.post("/api/sql", json={"sql": "SELECT * FROM login_log"}).json()

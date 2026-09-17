@@ -43,7 +43,8 @@ const slate: MantineColorsTuple = [
 
 export const theme = createTheme({
   primaryColor: 'emerald',
-  primaryShade: { light: 6, dark: 5 },
+  autoContrast: true,
+  primaryShade: { light: 7, dark: 4 },
   colors: { emerald, slate },
   fontFamily: 'Manrope Variable, system-ui, sans-serif',
   fontFamilyMonospace: 'JetBrains Mono, ui-monospace, monospace',
@@ -88,3 +89,5 @@ export const theme = createTheme({
     Modal: Modal.extend({ defaultProps: { centered: true, overlayProps: { backgroundOpacity: 0.45, blur: 2 } } }),
   },
 })
+
+

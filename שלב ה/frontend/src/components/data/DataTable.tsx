@@ -1,0 +1,11 @@
+import { ActionIcon, Anchor, Group, ScrollArea, Table, Tooltip, UnstyledButton } from '@mantine/core'
+import { IconArrowDown, IconArrowsSort, IconArrowUp, IconEye, IconPencil, IconTrash } from '@tabler/icons-react'
+import { Link } from 'react-router-dom'
+import type { Row, TableMeta } from '../../api/types'
+import { CellValue } from './CellValue'
+import { columnsOf, rowLink, rowPk } from './helpers'
+
+interface Props { table: TableMeta; rows: Row[]; sort?: string; dir: 'asc' | 'desc'; onSort: (name: string) => void; onView: (row: Row) => void; onEdit: (row: Row) => void; onDelete: (row: Row) => void }
+export function DataTable({ table, rows, sort, dir, onSort, onView, onEdit, onDelete }: Props) {
+  return <ScrollArea type="auto"><Table stickyHeader striped highlightOnHover verticalSpacing="xs" miw={700}><Table.Thead><Table.Tr>{columnsOf(table).map(c => <Table.Th key={c.name}><UnstyledButton onClick={() => onSort(c.name)} aria-label={`Sort by ${c.label}`}><Group gap={5} wrap="nowrap" style={{ whiteSpace: 'nowrap' }}>{c.label}{sort === c.name ? dir === 'asc' ? <IconArrowUp size={14} /> : <IconArrowDown size={14} /> : <IconArrowsSort size={14} opacity={0.5} />}</Group></UnstyledButton></Table.Th>)}<Table.Th>Actions</Table.Th></Table.Tr></Table.Thead><Table.Tbody>{rows.map((row, i) => <Table.Tr key={table.pk.length ? JSON.stringify(rowPk(table, row)) : i}>{columnsOf(table).map(c => <Table.Td key={c.name} ta={!c.fk && (c.type === 'int' || c.type === 'number') ? 'right' : undefined}>{c.name === table.displayColumn && rowLink(table, row) ? <Anchor component={Link} to={rowLink(table, row)!}><CellValue column={c} row={row} /></Anchor> : <CellValue column={c} row={row} />}</Table.Td>)}<Table.Td><Group gap={4} wrap="nowrap"><Tooltip label="View record"><ActionIcon variant="subtle" aria-label="View record" onClick={() => onView(row)}><IconEye size={17} /></ActionIcon></Tooltip>{!table.readonly && <><Tooltip label="Edit record"><ActionIcon variant="subtle" aria-label="Edit record" onClick={() => onEdit(row)}><IconPencil size={17} /></ActionIcon></Tooltip><Tooltip label="Delete record"><ActionIcon variant="subtle" color="red" aria-label="Delete record" onClick={() => onDelete(row)}><IconTrash size={17} /></ActionIcon></Tooltip></>}</Group></Table.Td></Table.Tr>)}</Table.Tbody></Table></ScrollArea>
+}

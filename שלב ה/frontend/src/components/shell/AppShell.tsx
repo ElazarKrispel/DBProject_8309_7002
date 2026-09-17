@@ -69,7 +69,7 @@ export function ColorSchemeToggle() {
     <Tooltip label={dark ? 'Light mode' : 'Dark mode'} withArrow>
       <ActionIcon
         variant="default"
-        size="lg"
+        size={44}
         aria-label="Toggle color scheme"
         onClick={() => setColorScheme(dark ? 'light' : 'dark')}
       >
@@ -138,7 +138,7 @@ export function AppShell() {
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label={opened ? 'Close navigation' : 'Open navigation'} aria-expanded={opened} />
             <Group gap={6} wrap="nowrap" visibleFrom="xs" style={{ minWidth: 0 }}>
               <Text fz="sm" c="dimmed">
                 Admin
@@ -169,7 +169,7 @@ export function AppShell() {
             >
               Search
             </Button>
-            <ActionIcon variant="default" size="lg" hiddenFrom="sm" aria-label="Search" onClick={spotlight.open}>
+            <ActionIcon variant="default" size={44} hiddenFrom="sm" aria-label="Search" onClick={spotlight.open}>
               <IconSearch size={18} stroke={1.6} />
             </ActionIcon>
             <ColorSchemeToggle />
@@ -281,3 +281,4 @@ export function AppShell() {
 }
 
 export default AppShell
+

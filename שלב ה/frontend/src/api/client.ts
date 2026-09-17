@@ -53,14 +53,17 @@ interface Detail {
 }
 
 async function toError(res: Response): Promise<ApiError> {
-  let detail: Detail | string | undefined
+  let detail: Detail | string | { loc?: (string | number)[]; msg?: string }[] | undefined
   try {
-    const json = (await res.json()) as { detail?: Detail | string }
+    const json = (await res.json()) as { detail?: typeof detail }
     detail = json.detail
   } catch {
     detail = undefined
   }
   if (typeof detail === 'string') return new ApiError(detail, res.status)
+  if (Array.isArray(detail)) {
+    return new ApiError(detail.map((item) => `${item.loc?.slice(1).join('.') || 'Input'}: ${item.msg || 'Invalid value'}`).join('; '), res.status)
+  }
   return new ApiError(detail?.message ?? `Request failed (${res.status})`, res.status, detail?.code, detail?.hint)
 }
 

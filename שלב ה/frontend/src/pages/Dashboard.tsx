@@ -1,10 +1,28 @@
+import { AreaChart, BarChart, DonutChart } from '@mantine/charts'
+import { Anchor, Badge, Card, Group, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core'
+import { IconArrowUpRight, IconBuildingCommunity, IconChartBar, IconChessKnight, IconCpu, IconDatabase, IconKey, IconLogin, IconServer, IconShieldCheck, IconUsers, IconWorld } from '@tabler/icons-react'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { api, programsHealth } from '../api/client'
+import type { DashboardKpis, LoginsByMonth } from '../api/types'
+import { ErrorAlert } from '../components/ui/ErrorAlert'
+import { KpiCard } from '../components/ui/KpiCard'
+import { LoadingState } from '../components/ui/LoadingState'
 import { PageHeader } from '../components/ui/PageHeader'
 
-export default function Dashboard() {
-  return (
-    <>
-      <PageHeader title="Dashboard" />
-      <p>Loading module</p>
-    </>
-  )
+interface Dashboard { kpis: DashboardKpis & { last_login_date: string }; charts: { logins_by_month: LoginsByMonth[]; rating_buckets: { bucket: string; players: number }[]; top_tiers: { tier: string; active: number }[]; players_by_country: { country: string; players: number }[]; players_by_status: { status: string; players: number }[]; memberships_by_role: { role: string; members: number }[] } }
+const quick = [ ['Players', '/tables/player', IconUsers], ['Clubs', '/tables/club', IconBuildingCommunity], ['Memberships', '/tables/club_membership', IconKey], ['Subscriptions', '/tables/player_subscription', IconChessKnight], ['Login Logs', '/tables/login_log', IconLogin], ['Social Connections', '/tables/social_connection', IconWorld], ['Reports', '/reports', IconChartBar], ['Programs', '/programs', IconCpu], ['SQL Console', '/sql', IconDatabase], ['Engines & Infrastructure', '/tables/engine', IconServer] ] as const
+export default function DashboardPage() {
+  const query = useQuery({ queryKey: ['dashboard'], queryFn: () => api.get<Dashboard>('/dashboard') })
+  const health = useQuery({ queryKey: ['programs', 'health'], queryFn: programsHealth })
+  const data = query.data
+  if (query.isLoading) return <><PageHeader title="Overview" description="Loading the platform overview" /><LoadingState rows={8} height={70} /></>
+  if (!data) return <ErrorAlert error={query.error} />
+  const k = data.kpis; const c = data.charts
+  const metrics = [ ['Players', k.players_total, IconUsers, '/tables/player', `${k.players_active.toLocaleString()} active players`], ['Clubs', k.clubs, IconBuildingCommunity, '/tables/club', 'Communities on the platform'], ['Active memberships', k.active_memberships, IconKey, '/tables/club_membership', 'Current club participation'], ['Active subscriptions', k.active_subscriptions, IconChessKnight, '/tables/player_subscription', 'Current subscription plans'], ['Login events', k.logins_total, IconLogin, '/tables/login_log', 'Recorded login activity'], ['Suspicious logins', `${k.suspicious_pct}%`, IconShieldCheck, '/tables/login_log', 'Share of recorded login events'], ['Engines', k.engines, IconCpu, '/tables/engine', 'Available chess engines'], ['Hardware nodes', k.nodes, IconServer, '/tables/hardwarenode', 'Infrastructure inventory'] ] as const
+  return <><PageHeader title="Overview" description={`Platform activity and community health. Data window through ${k.last_login_date?.slice(0, 10) || 'the latest recorded login'}.`} actions={<Badge size="lg" color={health.data?.ok ? 'emerald' : 'yellow'}>{health.isLoading ? 'Checking Stage 4 programs' : health.data?.ok ? 'Stage 4 programs installed' : 'Stage 4 programs need attention'}</Badge>} /><ErrorAlert error={query.error || health.error} /><Stack gap="lg"><SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>{metrics.map(([label, value, icon, to, description]) => <Anchor key={label} component={Link} to={to} underline="never" c="inherit"><KpiCard label={label} value={typeof value === 'number' ? value.toLocaleString() : value} icon={icon} description={description} /></Anchor>)}</SimpleGrid>
+  <Card><Title order={3} mb={4}>Login activity</Title><Text size="sm" c="dimmed" mb="lg">Monthly volume, failed attempts and suspicious events</Text><AreaChart h={260} data={c.logins_by_month} dataKey="month" series={[{ name: 'total', label: 'Total', color: 'emerald.6' }, { name: 'failed', label: 'Failed', color: 'orange.6' }, { name: 'suspicious', label: 'Suspicious', color: 'red.6' }]} withLegend curveType="monotone" tickLine="none" /></Card>
+  <SimpleGrid cols={{ base: 1, lg: 2 }}><Card><Title order={3} mb="lg">Rating distribution</Title><BarChart h={250} data={c.rating_buckets} dataKey="bucket" series={[{ name: 'players', label: 'Players', color: 'emerald.6' }]} tickLine="none" /></Card><Card><Title order={3} mb="lg">Players by status</Title><Group justify="center"><DonutChart h={250} size={220} withLabelsLine withLabels data={c.players_by_status.map((p, i) => ({ name: p.status, value: p.players, color: ['emerald.6', 'orange.6', 'red.6', 'blue.6', 'gray.6'][i % 5] }))} /></Group><Group justify="center" gap="sm" mt="sm">{c.players_by_status.map((p, i) => <Badge key={p.status} color={["emerald", "orange", "red", "blue", "gray"][i % 5]}>{p.status}: {p.players}</Badge>)}</Group></Card><Card><Title order={3} mb="lg">Top subscription tiers</Title><BarChart h={280} data={c.top_tiers.slice(0, 10)} dataKey="tier" orientation="vertical" yAxisProps={{ width: 85 }} series={[{ name: 'active', label: 'Active subscriptions', color: 'emerald.6' }]} tickLine="none" /></Card><Card><Title order={3} mb="lg">Players by country</Title><BarChart h={280} data={c.players_by_country.slice(0, 10)} dataKey="country" series={[{ name: 'players', label: 'Players', color: 'blue.6' }]} tickLine="none" /></Card><Card><Title order={3} mb="lg">Memberships by role</Title><BarChart h={230} data={c.memberships_by_role} dataKey="role" series={[{ name: 'members', label: 'Members', color: 'emerald.6' }]} tickLine="none" /></Card></SimpleGrid>
+  <div><Title order={2} mb="md">Quick access</Title><SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>{quick.map(([label, to, Icon]) => <Card key={to} component={Link} to={to} style={{ textDecoration: 'none', color: 'var(--mantine-color-text)' }}><Group justify="space-between" wrap="nowrap"><Group gap="sm" wrap="nowrap"><ThemeIcon variant="light" size={36}><Icon size={20} /></ThemeIcon><Text fw={600} size="sm">{label}</Text></Group><IconArrowUpRight size={17} /></Group></Card>)}</SimpleGrid></div></Stack></>
 }
+

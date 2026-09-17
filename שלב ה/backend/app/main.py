@@ -1,7 +1,6 @@
 """FastAPI entry point. Run from the backend folder:  uvicorn app.main:app --port 8000"""
 from contextlib import asynccontextmanager
 import importlib
-import traceback
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,12 +35,8 @@ async def handle_pg_error(_: Request, exc: psycopg.Error):
 
 
 for _name in ROUTERS:
-    try:
-        _mod = importlib.import_module(f".routers.{_name}", __package__)
-        app.include_router(_mod.router, prefix="/api")
-    except Exception:  # a router that is still being written must not take the API down
-        print(f"[main] router '{_name}' not loaded:")
-        traceback.print_exc()
+    _mod = importlib.import_module(f".routers.{_name}", __package__)
+    app.include_router(_mod.router, prefix="/api")
 
 
 @app.get("/api/health")
