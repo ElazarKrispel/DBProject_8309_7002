@@ -209,3 +209,7 @@ __marimo__/
 
 _tools/
 _safety_backup/
+# Stage 5 web app
+node_modules/
+frontend/dist/
+.venv/
