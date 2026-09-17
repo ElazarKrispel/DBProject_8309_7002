@@ -16,9 +16,13 @@ import {
   UnstyledButton,
   useComputedColorScheme,
   useMantineColorScheme,
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import { Spotlight, spotlight, type SpotlightActionGroupData } from '@mantine/spotlight'
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import {
+  Spotlight,
+  spotlight,
+  type SpotlightActionGroupData,
+} from "@mantine/spotlight";
 import {
   IconChessKnight,
   IconChevronDown,
@@ -26,71 +30,79 @@ import {
   IconMoon,
   IconSearch,
   IconSun,
-} from '@tabler/icons-react'
-import { useEffect, useMemo } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useMeta } from '../../api/client'
-import type { TableMeta } from '../../api/types'
-import { clearToken } from '../../auth'
-import { COLLAPSED_GROUPS, GROUP_ORDER, iconFor, NAV_PAGES } from '../../nav'
+} from "@tabler/icons-react";
+import { useEffect, useMemo } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useMeta } from "../../api/client";
+import type { TableMeta } from "../../api/types";
+import { clearToken } from "../../auth";
+import { COLLAPSED_GROUPS, GROUP_ORDER, iconFor, NAV_PAGES } from "../../nav";
 
 function usePageTitle(tables: TableMeta[] | undefined): string {
-  const { pathname } = useLocation()
-  let title: string
-  const page = NAV_PAGES.find((p) => p.path === pathname)
-  if (page) title = page.label
-  else if (pathname.startsWith('/tables/')) title = tables?.find((t) => t.key === pathname.slice(8))?.label ?? 'Table'
-  else if (pathname.startsWith('/players/')) title = `Player #${pathname.slice(9)}`
-  else if (pathname.startsWith('/clubs/')) title = `Club #${pathname.slice(7)}`
-  else title = 'Not found'
+  const { pathname } = useLocation();
+  let title: string;
+  const page = NAV_PAGES.find((p) => p.path === pathname);
+  if (page) title = page.label;
+  else if (pathname.startsWith("/tables/"))
+    title = tables?.find((t) => t.key === pathname.slice(8))?.label ?? "Table";
+  else if (pathname.startsWith("/players/"))
+    title = `Player #${pathname.slice(9)}`;
+  else if (pathname.startsWith("/clubs/")) title = `Club #${pathname.slice(7)}`;
+  else title = "Not found";
 
   useEffect(() => {
-    document.title = `${title} - Chess Platform Admin`
-  }, [title])
-  return title
+    document.title = `${title} - Chess Platform Admin`;
+  }, [title]);
+  return title;
 }
 
 function groupTables(tables: TableMeta[] | undefined) {
-  const by = new Map<string, TableMeta[]>()
+  const by = new Map<string, TableMeta[]>();
   for (const t of tables ?? []) {
-    const list = by.get(t.group) ?? []
-    list.push(t)
-    by.set(t.group, list)
+    const list = by.get(t.group) ?? [];
+    list.push(t);
+    by.set(t.group, list);
   }
-  const extra = [...by.keys()].filter((g) => !GROUP_ORDER.includes(g))
-  return [...GROUP_ORDER, ...extra].filter((g) => by.has(g)).map((g) => ({ group: g, tables: by.get(g)! }))
+  const extra = [...by.keys()].filter((g) => !GROUP_ORDER.includes(g));
+  return [...GROUP_ORDER, ...extra]
+    .filter((g) => by.has(g))
+    .map((g) => ({ group: g, tables: by.get(g)! }));
 }
 
 export function ColorSchemeToggle() {
-  const { setColorScheme } = useMantineColorScheme()
-  const computed = useComputedColorScheme('light')
-  const dark = computed === 'dark'
+  const { setColorScheme } = useMantineColorScheme();
+  const computed = useComputedColorScheme("light");
+  const dark = computed === "dark";
   return (
-    <Tooltip label={dark ? 'Light mode' : 'Dark mode'} withArrow>
+    <Tooltip label={dark ? "Light mode" : "Dark mode"} withArrow>
       <ActionIcon
         variant="default"
         size={44}
         aria-label="Toggle color scheme"
-        onClick={() => setColorScheme(dark ? 'light' : 'dark')}
+        onClick={() => setColorScheme(dark ? "light" : "dark")}
       >
-        {dark ? <IconSun size={18} stroke={1.6} /> : <IconMoon size={18} stroke={1.6} />}
+        {dark ? (
+          <IconSun size={18} stroke={1.6} />
+        ) : (
+          <IconMoon size={18} stroke={1.6} />
+        )}
       </ActionIcon>
     </Tooltip>
-  )
+  );
 }
 
 export function AppShell() {
-  const [opened, { toggle, close }] = useDisclosure(false)
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
-  const { data: tables } = useMeta()
-  const title = usePageTitle(tables)
-  const groups = useMemo(() => groupTables(tables), [tables])
+  const [opened, { toggle, close }] = useDisclosure(false);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { data: tables } = useMeta();
+  const title = usePageTitle(tables);
+  const groups = useMemo(() => groupTables(tables), [tables]);
 
   const actions: SpotlightActionGroupData[] = useMemo(
     () => [
       {
-        group: 'Pages',
+        group: "Pages",
         actions: NAV_PAGES.map((p) => ({
           id: `page${p.path}`,
           label: p.label,
@@ -99,31 +111,31 @@ export function AppShell() {
         })),
       },
       {
-        group: 'Tables',
+        group: "Tables",
         actions: (tables ?? []).map((t) => {
-          const IconCmp = iconFor(t.icon)
+          const IconCmp = iconFor(t.icon);
           return {
             id: `table-${t.key}`,
             label: t.label,
             description: t.group,
             leftSection: <IconCmp size={18} stroke={1.5} />,
             onClick: () => navigate(`/tables/${t.key}`),
-          }
+          };
         }),
       },
     ],
     [tables, navigate],
-  )
+  );
 
   const logout = () => {
-    clearToken()
-    navigate('/login', { replace: true })
-  }
+    clearToken();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <MantineAppShell
       header={{ height: 56 }}
-      navbar={{ width: 264, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+      navbar={{ width: 264, breakpoint: "sm", collapsed: { mobile: !opened } }}
       padding={0}
     >
       <Spotlight
@@ -132,14 +144,29 @@ export function AppShell() {
         nothingFound="Nothing found"
         highlightQuery
         limit={12}
-        searchProps={{ leftSection: <IconSearch size={18} stroke={1.5} />, placeholder: 'Search pages and tables' }}
+        searchProps={{
+          leftSection: <IconSearch size={18} stroke={1.5} />,
+          placeholder: "Search pages and tables",
+        }}
       />
 
       <MantineAppShell.Header>
         <Group h="100%" px="md" justify="space-between" wrap="nowrap">
           <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label={opened ? 'Close navigation' : 'Open navigation'} aria-expanded={opened} />
-            <Group gap={6} wrap="nowrap" visibleFrom="xs" style={{ minWidth: 0 }}>
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+              aria-label={opened ? "Close navigation" : "Open navigation"}
+              aria-expanded={opened}
+            />
+            <Group
+              gap={6}
+              wrap="nowrap"
+              visibleFrom="xs"
+              style={{ minWidth: 0 }}
+            >
               <Text fz="sm" c="dimmed">
                 Admin
               </Text>
@@ -169,7 +196,13 @@ export function AppShell() {
             >
               Search
             </Button>
-            <ActionIcon variant="default" size={44} hiddenFrom="sm" aria-label="Search" onClick={spotlight.open}>
+            <ActionIcon
+              variant="default"
+              size={44}
+              hiddenFrom="sm"
+              aria-label="Search"
+              onClick={spotlight.open}
+            >
               <IconSearch size={18} stroke={1.6} />
             </ActionIcon>
             <ColorSchemeToggle />
@@ -177,19 +210,32 @@ export function AppShell() {
               <Menu.Target>
                 <UnstyledButton aria-label="User menu">
                   <Group gap={8} wrap="nowrap">
-                    <Avatar radius="xl" size={32} color="emerald" variant="filled">
+                    <Avatar
+                      radius="xl"
+                      size={32}
+                      color="emerald"
+                      variant="filled"
+                    >
                       AD
                     </Avatar>
                     <Text fz="sm" fw={600} visibleFrom="sm">
                       admin
                     </Text>
-                    <IconChevronDown size={14} stroke={1.8} style={{ opacity: 0.6 }} />
+                    <IconChevronDown
+                      size={14}
+                      stroke={1.8}
+                      style={{ opacity: 0.6 }}
+                    />
                   </Group>
                 </UnstyledButton>
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Label>Signed in as admin</Menu.Label>
-                <Menu.Item color="red" leftSection={<IconLogout size={16} />} onClick={logout}>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconLogout size={16} />}
+                  onClick={logout}
+                >
                   Logout
                 </Menu.Item>
               </Menu.Dropdown>
@@ -200,13 +246,18 @@ export function AppShell() {
 
       <MantineAppShell.Navbar>
         <MantineAppShell.Section p="md" pb="sm">
-          <UnstyledButton component={Link} to="/" onClick={close} style={{ display: 'block' }}>
+          <UnstyledButton
+            component={Link}
+            to="/"
+            onClick={close}
+            style={{ display: "block" }}
+          >
             <Group gap="sm" wrap="nowrap">
               <ThemeIcon size={38} radius="md" variant="filled" color="emerald">
                 <IconChessKnight size={24} stroke={1.7} />
               </ThemeIcon>
               <div style={{ lineHeight: 1.15 }}>
-                <Text fw={700} fz="md" style={{ letterSpacing: '-0.01em' }}>
+                <Text fw={700} fz="md" style={{ letterSpacing: "-0.01em" }}>
                   Chess Platform
                 </Text>
                 <Text fz="xs" c="dimmed">
@@ -227,12 +278,12 @@ export function AppShell() {
               leftSection={<p.icon size={18} stroke={1.6} />}
               active={pathname === p.path}
               onClick={close}
-              style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+              style={{ borderRadius: "var(--mantine-radius-sm)" }}
             />
           ))}
 
           {groups.map(({ group, tables: list }) => {
-            const hasActive = list.some((t) => pathname === `/tables/${t.key}`)
+            const hasActive = list.some((t) => pathname === `/tables/${t.key}`);
             return (
               <NavLink
                 key={group}
@@ -243,10 +294,10 @@ export function AppShell() {
                 fw={600}
                 fz="xs"
                 c="dimmed"
-                style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+                style={{ borderRadius: "var(--mantine-radius-sm)" }}
               >
                 {list.map((t) => {
-                  const IconCmp = iconFor(t.icon)
+                  const IconCmp = iconFor(t.icon);
                   return (
                     <NavLink
                       key={t.key}
@@ -259,26 +310,28 @@ export function AppShell() {
                       fw={500}
                       fz="sm"
                       c="var(--mantine-color-text)"
-                      style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+                      style={{ borderRadius: "var(--mantine-radius-sm)" }}
                     />
-                  )
+                  );
                 })}
               </NavLink>
-            )
+            );
           })}
         </MantineAppShell.Section>
       </MantineAppShell.Navbar>
 
       <MantineAppShell.Main
-        style={{ background: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8))' }}
+        style={{
+          background:
+            "light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-8))",
+        }}
       >
-        <Container fluid px={{ base: 'md', lg: 'xl' }} py="lg">
+        <Container fluid px={{ base: "md", lg: "xl" }} py="lg">
           <Outlet />
         </Container>
       </MantineAppShell.Main>
     </MantineAppShell>
-  )
+  );
 }
 
-export default AppShell
-
+export default AppShell;

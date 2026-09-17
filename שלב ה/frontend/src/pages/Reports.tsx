@@ -133,7 +133,7 @@ function QueryPanel({ query }: { query: Definition }) {
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             {query.params.map((p) => {
               const common = {
-                
+
                 label: p.label,
                 description: p.help,
               };
@@ -180,11 +180,11 @@ function QueryPanel({ query }: { query: Definition }) {
               }))}
             />
           )}
-          <SqlBlock sql={selected.sql} collapsible />
+          <Accordion variant="contained"><Accordion.Item value="query-sql"><Accordion.Control>Query SQL: variant {variant}</Accordion.Control><Accordion.Panel><SqlBlock sql={selected.sql} collapsible /></Accordion.Panel></Accordion.Item></Accordion>
           {selected.note && (
             <Accordion variant="contained">
               <Accordion.Item value="note">
-                <Accordion.Control>Why is one form faster?</Accordion.Control>
+                <Accordion.Control>{query.variants.length > 1 ? "Why is one form faster?" : "Query notes"}</Accordion.Control>
                 <Accordion.Panel>
                   <Alert color="blue">{selected.note}</Alert>
                 </Accordion.Panel>
@@ -389,4 +389,3 @@ export default function Reports() {
     </>
   );
 }
-

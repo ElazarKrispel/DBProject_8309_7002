@@ -452,7 +452,9 @@ export default function PlayerDetail() {
                   : result.error?.message}
               </Alert>
               <NoticeConsole notices={result.notices} />
-              <ScrollArea mah={260}><Code block>{JSON.stringify(result, null, 2)}</Code></ScrollArea>
+              <ScrollArea mah={260}>
+                <Code block>{JSON.stringify(result, null, 2)}</Code>
+              </ScrollArea>
             </>
           )}
         </Stack>
@@ -460,5 +462,3 @@ export default function PlayerDetail() {
     </Stack>
   );
 }
-
-

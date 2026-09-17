@@ -69,5 +69,3 @@ export function DataGrid({
     </Text>
   );
 }
-
-
